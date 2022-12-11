@@ -1,5 +1,6 @@
 from torch.utils.data import Dataset, DataLoader
 import skimage
+import torch
 
 class NanoDataset(Dataset):
     def __init__(self,all_files_gt,all_files_blur,transform=None):
@@ -21,3 +22,12 @@ class NanoDataset(Dataset):
         
         return sample
 
+
+class ToTensor(object):
+    """Convert ndarrays in sample to Tensors."""
+
+    def __call__(self, sample):
+        im_gt, meas = sample['gt'], sample['blur']
+
+        return {'gt': torch.from_numpy(im_gt),
+                'blur': torch.from_numpy(meas)}
