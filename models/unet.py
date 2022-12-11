@@ -22,7 +22,7 @@ class Unet(nn.Module):
             self.down3 = nn.AvgPool2d(kernel_size=2)
             self.down4 = nn.AvgPool2d(kernel_size=2)
         elif down == 'conv':
-            self.down1 = nn.Conv2d(32, 32, kernel_size=2, stride=2, groups=32)
+            self.down1 = nn.Conv2d(32, 32, kernel_size=2, stride=2,groups=32)
             self.down2 = nn.Conv2d(64, 64, kernel_size=2, stride=2, groups=64)
             self.down3 = nn.Conv2d(128, 128, kernel_size=2, stride=2, groups=128)
             self.down4 = nn.Conv2d(256, 256, kernel_size=2, stride=2, groups=256)
