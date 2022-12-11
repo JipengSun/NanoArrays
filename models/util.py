@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import torch
+import numpy as np
 
 def show_tensor_image(image_tensor):
     # reverse_transforms = transforms.Compose([
@@ -19,7 +20,7 @@ def show_tensor_image(image_tensor):
     plt.axis('off')
     for idx in range(N):
         plt.subplot(1, N, idx+1)
-        plt.imshow(image_np[idx,:,:,:])
+        plt.imshow((image_np[idx,:,:,:]*255).astype(np.uint8))
 
 def show_tensor_first_image(image_tensor):
     # reverse_transforms = transforms.Compose([
@@ -36,7 +37,7 @@ def show_tensor_first_image(image_tensor):
     image_np = image_tensor.detach().cpu().numpy()
     plt.figure(figsize=(5,5))
     plt.axis('off')
-    plt.imshow(image_np[0,:,:,:])
+    plt.imshow((image_np[0,:,:,:]*255).astype(np.uint8))
 
 
 
@@ -50,3 +51,9 @@ def reshape_train_to_image(train_sensor):
 
 def reshape_image_to_train(image_sensor):
     return image_sensor.permute((0,3,1,2))
+
+
+def display_results(input_tensor,gt_tensor,out_tensor):
+    show_tensor_image(gt_tensor)
+    show_tensor_image(input_tensor)
+    show_output_tensor(out_tensor)
