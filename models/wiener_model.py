@@ -1,6 +1,8 @@
 import torch.nn as nn
 import torch
 import numpy as np
+import torch.nn.functional as F
+from models.util import show_output_tensor
 
 class MultiWienerDeconvolution3D(nn.Module):
     """
@@ -77,7 +79,7 @@ class WienerDeconvolution3D(nn.Module):
         
     def forward(self, y):
         # Y preprocessing, Y is shape (N, C,H, W)
-        h, w = y.shape[-3:-1]
+        h, w = y.shape[-2:]
         y = y.type(torch.complex64)
 
     
@@ -91,8 +93,8 @@ class WienerDeconvolution3D(nn.Module):
         Y=torch.fft.fft2(y)
 
         # Components preprocessing, psfs is shape (C,H, W)
-        psf = self.psfs.type(torch.complex64)
-        h_psf, w_psf = self.psfs.shape[0:2]
+        
+        h_psf, w_psf = self.psfs.shape[-2:]
 
         # Pad psf
         padding_psf = (
@@ -100,12 +102,18 @@ class WienerDeconvolution3D(nn.Module):
                    (int(np.ceil(w_psf / 2)), int(np.floor(w_psf / 2))),
                     (0, 0))
 
+        #padding_psf_test = (int(np.ceil(h / 2)), int(np.floor(h / 2)), int(np.ceil(w / 2)), int(np.floor(w / 2)))
+        #padding_psf_test = (1,1,1,1)
+        #self.psfs = torch.nn.functional.pad(, padding_psf_test, mode='constant',value=0)
+        psf = self.psfs.type(torch.complex64)
+
         H_sum = torch.fft.fft2(self.psfs)
+        #print(psf[0,120:130,120:130])
 
         #print(H_sum.shape, Y.shape, self.Ks.shape)
-        X=(torch.conj(H_sum)*Y)/ (torch.square(torch.abs(H_sum))+100*self.Ks)#, dtype=tf.complex64)
+        X=(torch.conj(H_sum)*Y)/ (torch.square(torch.abs(H_sum))+1*self.Ks)#, dtype=tf.complex64)
     
-        x=torch.real((torch.fft.ifftshift(torch.fft.ifft2(X), dim=(-2, -1))))
+        x=torch.abs((torch.fft.ifftshift(torch.fft.ifft2(X), dim=(-2, -1))))
         
 
         return x

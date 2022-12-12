@@ -31,3 +31,21 @@ class ToTensor(object):
 
         return {'gt': torch.from_numpy(im_gt),
                 'blur': torch.from_numpy(meas)}
+
+class TestNanoDataset(Dataset):
+    def __init__(self,all_files_path,transform=None):
+        self.all_files_path = all_files_path
+        self.transform = transform
+
+    def __len__(self):
+
+        return len(self.all_files_path)
+        
+    def __getitem__(self, idx):
+        img_all = skimage.io.imread(self.all_files_path[idx]).astype('float32')/255.
+        img_resize = skimage.transform.resize(img_all,(256,256))
+
+        if self.transform:
+            img_resize = self.transform(img_resize)
+        
+        return img_resize

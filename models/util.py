@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import torch
 import numpy as np
+import imageio
 
 def show_tensor_image(image_tensor):
     # reverse_transforms = transforms.Compose([
@@ -57,3 +58,18 @@ def display_results(input_tensor,gt_tensor,out_tensor):
     show_tensor_image(gt_tensor)
     show_tensor_image(input_tensor)
     show_output_tensor(out_tensor)
+
+
+def load_np_psf(PSF_path,w,h):
+    output_img = []
+    for idx, channel in enumerate(["r", "g", "b"]):
+        psf = imageio.imread(PSF_path+"psf_crop_{}.png".format(channel))
+        output_img.append(psf)
+    stack = np.array(output_img).astype(np.float32)
+    stack = stack/255
+    padx1 = int(np.ceil((w-stack.shape[1])/2))
+    padx2 = int(np.floor((w-stack.shape[1])/2))
+    pady1 = int(np.ceil((h-stack.shape[2])/2))
+    pady2 = int(np.floor((w-stack.shape[2])/2))
+    return np.pad(stack,((0,0),(padx1,padx2),(pady1,pady2)),'constant',constant_values = 0)
+
