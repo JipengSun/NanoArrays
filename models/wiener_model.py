@@ -71,13 +71,28 @@ class WienerDeconvolution3D(nn.Module):
     
     def __init__(self, initial_psfs, initial_Ks):
         super(WienerDeconvolution3D, self).__init__()
-        initial_psfs = torch.tensor(initial_psfs, dtype=torch.float32)
-        initial_Ks = torch.tensor(initial_Ks, dtype=torch.float32)
+        initial_psfs = torch.tensor(initial_psfs, dtype=torch.float32).cuda()
+        initial_Ks = torch.tensor(initial_Ks, dtype=torch.float32).cuda()
 
-        self.psfs = nn.Parameter(initial_psfs, requires_grad =True)
-        self.Ks = nn.Parameter(initial_Ks, requires_grad =True) #NEEED RELU CONSTRAINT HERE K is constrained to be nonnegative
+        self.psfs = initial_Ks#nn.Parameter(initial_psfs, requires_grad =True)
+        self.Ks = initial_Ks#nn.Parameter(initial_Ks, requires_grad =True) #NEEED RELU CONSTRAINT HERE K is constrained to be nonnegative
         
+    def weiner_filter(self,img,kernel,K):
+        #kernel /= torch.sum(kernel)
+        #dummy = torch.clone(img)
+        dummy = torch.fft.fft2(img).cuda()
+        #kernel = torch.unsqueeze(kernel,0).repeat(8,1,1,1).cuda()
+        #print(kernel.shape)
+        kernel = torch.fft.fft2(kernel).cuda()
+        #print(kernel.shape)
+        kernel = torch.conj(kernel).cuda()/(torch.abs(kernel.cuda())**2 + K.cuda())
+        dummy = dummy * kernel
+        dummy = torch.fft.ifftshift(torch.abs(torch.fft.ifft2(dummy)),dim=(-2, -1))
+        return dummy    
+
     def forward(self, y):
+        return self.weiner_filter(y,self.psfs,self.Ks)
+    '''
         # Y preprocessing, Y is shape (N, C,H, W)
         h, w = y.shape[-2:]
         y = y.type(torch.complex64)
@@ -111,20 +126,24 @@ class WienerDeconvolution3D(nn.Module):
         #print(psf[0,120:130,120:130])
 
         #print(H_sum.shape, Y.shape, self.Ks.shape)
-        X=(torch.conj(H_sum)*Y)/ (torch.square(torch.abs(H_sum))+1*self.Ks)#, dtype=tf.complex64)
+        #show_output_tensor(Y)
+        #show_output_tensor(H_sum)
+        X=(torch.conj(H_sum)*Y)/ (torch.square(torch.abs(H_sum)*Y)+1000*self.Ks)#, dtype=tf.complex64)
     
-        x=torch.abs((torch.fft.ifftshift(torch.fft.ifft2(X), dim=(-2, -1))))
-        
+        x=torch.real((torch.fft.ifftshift(torch.fft.ifft2(X), dim=(-2, -1))))
+        output = ((x-torch.min(x))/(torch.max(x)-torch.min(x)))
+        #print(output.shape)
+        #show_output_tensor(output)
 
-        return x
-    
+        return output
+    '''
     def get_config(self):
         config = super().get_config().copy()
         config.update({
             'initial_psfs': self.psfs.numpy(),
             'initial_Ks': self.Ks.numpy()
         })
-        return config    
+        return config
     
     
 class MyEnsemble2d(nn.Module):
