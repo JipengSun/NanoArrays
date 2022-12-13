@@ -74,8 +74,8 @@ class WienerDeconvolution3D(nn.Module):
         initial_psfs = torch.tensor(initial_psfs, dtype=torch.float32).cuda()
         initial_Ks = torch.tensor(initial_Ks, dtype=torch.float32).cuda()
 
-        self.psfs = initial_Ks#nn.Parameter(initial_psfs, requires_grad =True)
-        self.Ks = initial_Ks#nn.Parameter(initial_Ks, requires_grad =True) #NEEED RELU CONSTRAINT HERE K is constrained to be nonnegative
+        self.psfs = initial_psfs#nn.Parameter(initial_psfs, requires_grad =True)
+        self.Ks = nn.Parameter(initial_Ks, requires_grad =True) #NEEED RELU CONSTRAINT HERE K is constrained to be nonnegative
         
     def weiner_filter(self,img,kernel,K):
         #kernel /= torch.sum(kernel)
@@ -87,7 +87,7 @@ class WienerDeconvolution3D(nn.Module):
         #print(kernel.shape)
         kernel = torch.conj(kernel).cuda()/(torch.abs(kernel.cuda())**2 + K.cuda())
         dummy = dummy * kernel
-        dummy = torch.fft.ifftshift(torch.abs(torch.fft.ifft2(dummy)),dim=(-2, -1))
+        dummy = torch.fft.ifftshift(torch.abs(torch.fft.ifft2(dummy)),dim=(-2,-1))
         return dummy    
 
     def forward(self, y):
